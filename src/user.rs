@@ -32,15 +32,24 @@ impl User {
     pub fn is_simple(&self) -> bool {
         self.addr == PeerAddr::default()
     }
-}
 
-pub fn generate(
-    addr: PeerAddr,
-    name: String,
-    avatar: String,
-    bio: String,
-    seed: &[u8],
-) -> (User, Secret) {
-    let (did, sk) = genereate_id(seed);
-    (User::new(did, addr, name, avatar, bio), sk)
+    pub fn generate(
+        addr: PeerAddr,
+        name: impl ToString,
+        avatar: impl ToString,
+        bio: impl ToString,
+        seed: impl ToString,
+    ) -> (User, Secret) {
+        let (did, sk) = genereate_id(seed.to_string().as_bytes());
+        (
+            User::new(
+                did,
+                addr,
+                name.to_string(),
+                avatar.to_string(),
+                bio.to_string(),
+            ),
+            sk,
+        )
+    }
 }
