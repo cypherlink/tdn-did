@@ -9,17 +9,15 @@ pub struct User {
     pub addr: PeerAddr,
     pub name: String,
     pub avatar: String,
-    pub bio: String,
 }
 
 impl User {
-    pub fn new(id: Did, addr: PeerAddr, name: String, avatar: String, bio: String) -> Self {
+    pub fn new(id: Did, addr: PeerAddr, name: String, avatar: String) -> Self {
         Self {
             id,
             addr,
             name,
             avatar,
-            bio,
         }
     }
 
@@ -37,18 +35,11 @@ impl User {
         addr: PeerAddr,
         name: impl ToString,
         avatar: impl ToString,
-        bio: impl ToString,
         seed: impl ToString,
     ) -> (User, Secret) {
         let (did, sk) = genereate_id(seed.to_string().as_bytes());
         (
-            User::new(
-                did,
-                addr,
-                name.to_string(),
-                avatar.to_string(),
-                bio.to_string(),
-            ),
+            User::new(did, addr, name.to_string(), avatar.to_string()),
             sk,
         )
     }
