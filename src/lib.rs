@@ -6,7 +6,7 @@ pub use ed25519_dalek::{PublicKey, SecretKey};
 pub mod user;
 pub use user::User;
 
-#[derive(Default, Clone, Copy, Serialize, Deserialize, Eq, PartialEq, Hash)]
+#[derive(Default, Clone, Copy, Serialize, Deserialize, Eq, PartialEq, Hash, Debug)]
 pub struct Did([u8; 32]);
 
 #[derive(Default)]
