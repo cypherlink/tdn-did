@@ -21,6 +21,12 @@ impl Did {
         bs58::encode(&self.0).into_string()
     }
 
+    pub fn to_string_with_suffix(&self, suffix: &str) -> String {
+        let mut s = bs58::encode(&self.0).into_string();
+        s.push_str(suffix);
+        s
+    }
+
     pub fn from_string(s: &str) -> Result<Did> {
         bs58::decode(s)
             .into_vec()
