@@ -28,14 +28,15 @@ impl Did {
     }
 
     pub fn from_string(s: &str) -> Result<Did> {
-        bs58::decode(s)
-            .into_vec()
-            .map(|vec| {
+        if let Ok(vec) = bs58::decode(s).into_vec() {
+            if vec.len() == 32 {
                 let mut did = [0u8; 32];
                 did.copy_from_slice(&vec);
-                Did(did)
-            })
-            .map_err(|_e| new_io_error("did from string error."))
+                return Ok(Did(did));
+            }
+        }
+
+        Err(new_io_error("did from string error."))
     }
 }
 
