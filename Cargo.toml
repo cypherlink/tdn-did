@@ -1,5 +1,5 @@
 [package]
-name = "tdn_did"
+name = "tdn-did"
 version = "0.1.0"
 authors = ["CypherLink <contact@cypherlink.io>"]
 edition = "2018"
