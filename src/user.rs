@@ -8,7 +8,7 @@ pub struct User {
     pub id: Did,
     pub addr: PeerAddr,
     pub name: String,
-    pub lock: String, // maybe password hash or lock.
+    pub lock: String, // password-hash or lock.
     pub avatar: Vec<u8>,
 }
 
