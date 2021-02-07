@@ -7,10 +7,10 @@ pub mod user;
 pub use user::User;
 
 #[derive(Default, Clone, Copy, Serialize, Deserialize, Eq, PartialEq, Hash, Debug)]
-pub struct Did([u8; 32]);
+pub struct Did(pub [u8; 32]);
 
 #[derive(Default)]
-pub struct Proof([u8; 32]);
+pub struct Proof(pub [u8; 32]);
 
 impl Did {
     pub fn as_bytes(&self) -> &[u8] {
