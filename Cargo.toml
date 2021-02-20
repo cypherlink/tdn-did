@@ -5,10 +5,19 @@ authors = ["CypherLink <contact@cypherlink.io>"]
 edition = "2018"
 license = "MIT/Apache-2.0"
 
+[features]
+default = ["tdn"]
+tdn = ["tdn-types"]
+# std = ["tdn-types/std"]
+# single = ["tdn-types/signle"]
+# multiple = ["tdn-types/multiple"]
+# full = ["tdn-types/full"]
+
 [dependencies]
 ed25519-dalek = "1.0"
+signature = { version = "1", default-features = false }
 blake3 = "0.3"
 bs58 = "0.4"
 serde = { version = "1", features = ["derive"] }
-#tdn-types = { git = "https://github.com/cypherlink/TDN", branch="main", default-features = false }
-tdn-types = { path = "../TDN/types", default-features = false } # Dev
+#tdn-types = { git = "https://github.com/cypherlink/TDN", branch="main", optional = true }
+tdn-types = { path = "../TDN/types", default-features = false, optional = true } # Dev

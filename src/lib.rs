@@ -1,10 +1,11 @@
 use serde::{Deserialize, Serialize};
-use tdn_types::primitive::{new_io_error, PeerAddr, Result};
+use std::io::{Error, ErrorKind, Result};
 
-pub use ed25519_dalek::{PublicKey, SecretKey};
+pub use ed25519_dalek::Keypair;
+use ed25519_dalek::{PublicKey, SecretKey};
 
+#[cfg(feature = "tdn")]
 pub mod user;
-pub use user::User;
 
 #[derive(Default, Clone, Copy, Serialize, Deserialize, Eq, PartialEq, Hash, Debug)]
 pub struct Did(pub [u8; 32]);
@@ -36,11 +37,11 @@ impl Did {
             }
         }
 
-        Err(new_io_error("did from string error."))
+        Err(Error::new(ErrorKind::Other, "did from string error."))
     }
 }
 
-pub fn genereate_id(seed: &[u8]) -> (Did, SecretKey) {
+pub fn genereate_id(seed: &[u8]) -> (Did, Keypair) {
     let mut hasher = blake3::Hasher::new();
     hasher.update(seed);
 
@@ -49,17 +50,23 @@ pub fn genereate_id(seed: &[u8]) -> (Did, SecretKey) {
         let tmp_hash = hasher.finalize();
         if let Ok(sk) = SecretKey::from_bytes(tmp_hash.as_bytes()) {
             let pk: PublicKey = (&sk).into();
-            return (Did(pk.to_bytes()), sk);
+            return (
+                Did(pk.to_bytes()),
+                Keypair {
+                    public: pk,
+                    secret: sk,
+                },
+            );
         } else {
             hasher.update(tmp_hash.as_bytes());
         }
     }
 }
 
-pub fn _zkp_proof(_peer_addr: &PeerAddr, _m_id: &Did, _sk: &SecretKey, _r_id: &Did) -> Proof {
+pub fn _zkp_proof(_bytes: &Vec<u8>, _m_id: &Did, _sk: &SecretKey, _r_id: &Did) -> Proof {
     todo!()
 }
 
-pub fn _zkp_verify(_proof: &Proof, _peer_addr: &PeerAddr, _r_id: &Did, _sk: &SecretKey) -> bool {
+pub fn _zkp_verify(_proof: &Proof, _bytes: &Vec<u8>, _r_id: &Did, _sk: &SecretKey) -> bool {
     todo!()
 }
