@@ -22,6 +22,29 @@ impl Did {
         bs58::encode(&self.0).into_string()
     }
 
+    pub fn to_hex(&self) -> String {
+        let mut hex = String::new();
+        hex.extend(self.0.iter().map(|byte| format!("{:02x?}", byte)));
+        hex
+    }
+
+    pub fn from_hex(s: impl ToString) -> Result<Did> {
+        let s = s.to_string();
+        if s.len() != 64 {
+            return Err(Error::new(ErrorKind::Other, "Hex is invalid"));
+        }
+
+        let mut value = [0u8; 32];
+
+        for i in 0..(s.len() / 2) {
+            let res = u8::from_str_radix(&s[2 * i..2 * i + 2], 16)
+                .map_err(|_e| Error::new(ErrorKind::Other, "Hex is invalid"))?;
+            value[i] = res;
+        }
+
+        Ok(Did(value))
+    }
+
     pub fn to_string_with_suffix(&self, suffix: &str) -> String {
         let mut s = bs58::encode(&self.0).into_string();
         s.push_str(suffix);
