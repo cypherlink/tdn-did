@@ -1,70 +1,42 @@
 use serde::{Deserialize, Serialize};
-use std::io::{Error, ErrorKind, Result};
 
 pub use ed25519_dalek::Keypair;
-use ed25519_dalek::{PublicKey, SecretKey};
 
-#[cfg(feature = "tdn")]
+use ed25519_dalek::{PublicKey, SecretKey, Signature, Signer, Verifier};
+use signature::Signature as _;
+use tdn_types::{
+    group::GroupId,
+    primitive::{new_io_error, PeerAddr, Result},
+};
+
+#[cfg(feature = "user")]
 pub mod user;
 
-#[derive(Default, Clone, Copy, Serialize, Deserialize, Eq, PartialEq, Hash, Debug)]
-pub struct Did(pub [u8; 32]);
+const PROOF_LENGTH: usize = 64; // use ed25519 signaure length.
 
-#[derive(Default)]
-pub struct Proof(pub [u8; 32]);
+#[derive(Default, Clone, Serialize, Deserialize, Eq, PartialEq, Hash, Debug)]
+pub struct Proof(Vec<u8>);
 
-impl Did {
-    pub fn as_bytes(&self) -> &[u8] {
-        &self.0
+impl Proof {
+    pub fn prove(kp: &Keypair, addr: &PeerAddr) -> Proof {
+        Proof(kp.sign(&addr.0).as_bytes().to_vec())
     }
 
-    pub fn to_string(&self) -> String {
-        bs58::encode(&self.0).into_string()
-    }
-
-    pub fn to_hex(&self) -> String {
-        let mut hex = String::new();
-        hex.extend(self.0.iter().map(|byte| format!("{:02x?}", byte)));
-        hex
-    }
-
-    pub fn from_hex(s: impl ToString) -> Result<Did> {
-        let s = s.to_string();
-        if s.len() != 64 {
-            return Err(Error::new(ErrorKind::Other, "Hex is invalid"));
+    pub fn verify(&self, gid: &GroupId, addr: &PeerAddr) -> Result<()> {
+        if self.0.len() != PROOF_LENGTH {
+            return Err(new_io_error("proof length failure!"));
         }
+        let sign =
+            Signature::from_bytes(&self.0).map_err(|_e| new_io_error("proof serialize failure"))?;
+        let pk =
+            PublicKey::from_bytes(&gid.0).map_err(|_e| new_io_error("public serialize failure"))?;
 
-        let mut value = [0u8; 32];
-
-        for i in 0..(s.len() / 2) {
-            let res = u8::from_str_radix(&s[2 * i..2 * i + 2], 16)
-                .map_err(|_e| Error::new(ErrorKind::Other, "Hex is invalid"))?;
-            value[i] = res;
-        }
-
-        Ok(Did(value))
-    }
-
-    pub fn to_string_with_suffix(&self, suffix: &str) -> String {
-        let mut s = bs58::encode(&self.0).into_string();
-        s.push_str(suffix);
-        s
-    }
-
-    pub fn from_string(s: &str) -> Result<Did> {
-        if let Ok(vec) = bs58::decode(s).into_vec() {
-            if vec.len() == 32 {
-                let mut did = [0u8; 32];
-                did.copy_from_slice(&vec);
-                return Ok(Did(did));
-            }
-        }
-
-        Err(Error::new(ErrorKind::Other, "did from string error."))
+        pk.verify(&addr.0, &sign)
+            .map_err(|_e| new_io_error("proof verify failure"))
     }
 }
 
-pub fn genereate_id(seed: &[u8]) -> (Did, Keypair) {
+pub fn genereate_id(seed: &[u8]) -> (GroupId, Keypair) {
     let mut hasher = blake3::Hasher::new();
     hasher.update(seed);
 
@@ -74,7 +46,7 @@ pub fn genereate_id(seed: &[u8]) -> (Did, Keypair) {
         if let Ok(sk) = SecretKey::from_bytes(tmp_hash.as_bytes()) {
             let pk: PublicKey = (&sk).into();
             return (
-                Did(pk.to_bytes()),
+                GroupId(pk.to_bytes()),
                 Keypair {
                     public: pk,
                     secret: sk,
@@ -84,12 +56,4 @@ pub fn genereate_id(seed: &[u8]) -> (Did, Keypair) {
             hasher.update(tmp_hash.as_bytes());
         }
     }
-}
-
-pub fn _zkp_proof(_bytes: &Vec<u8>, _m_id: &Did, _sk: &SecretKey, _r_id: &Did) -> Proof {
-    todo!()
-}
-
-pub fn _zkp_verify(_proof: &Proof, _bytes: &Vec<u8>, _r_id: &Did, _sk: &SecretKey) -> bool {
-    todo!()
 }

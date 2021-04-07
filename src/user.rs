@@ -1,70 +1,57 @@
-use ed25519_dalek::{Keypair, PublicKey, Signature, Signer, Verifier};
+use ed25519_dalek::Keypair;
 use serde::{Deserialize, Serialize};
-use signature::Signature as _;
-use tdn_types::primitive::{PeerAddr, Result};
+use tdn_types::{
+    group::GroupId,
+    primitive::{PeerAddr, Result},
+};
 
-use crate::Did;
+use crate::Proof;
 
 #[derive(Serialize, Deserialize, Clone)]
 pub struct User {
-    pub id: Did,
+    pub id: GroupId,
     pub addr: PeerAddr,
     pub name: String,
     pub avatar: Vec<u8>,
-    pub sign1: [u8; 32], // use two for auto-serialize. Lazy.
-    pub sign2: [u8; 32],
+    pub proof: Proof,
 }
 
 impl User {
     pub fn new(
-        id: Did,
+        id: GroupId,
         addr: PeerAddr,
         name: String,
         avatar: Vec<u8>,
         kp: &Keypair,
     ) -> Result<Self> {
-        let sign = kp.sign(&addr.0).to_bytes();
-        let mut sign1 = [0u8; 32];
-        let mut sign2 = [0u8; 32];
-        sign1.copy_from_slice(&sign[..32]);
-        sign2.copy_from_slice(&sign[32..]);
+        let proof = Proof::prove(kp, &addr);
 
         Ok(Self {
             id,
             addr,
             name,
             avatar,
-            sign1,
-            sign2,
+            proof,
         })
     }
 
     /// verify if addr is signature by Did.
-    pub fn verify(&self) -> bool {
-        let mut sign_bytes = [0u8; 64];
-        sign_bytes[..32].copy_from_slice(&self.sign1);
-        sign_bytes[32..].copy_from_slice(&self.sign1);
-        if let Ok(sign) = Signature::from_bytes(&sign_bytes) {
-            if let Ok(pk) = PublicKey::from_bytes(&self.id.0) {
-                return pk.verify(&self.addr.0, &sign).is_ok();
-            }
-        }
-
-        false
+    pub fn verify(&self) -> Result<()> {
+        self.proof.verify(&self.id, &self.addr)
     }
 
-    pub fn new_simple(id: Did) -> Self {
+    pub fn new_simple(id: GroupId, addr: PeerAddr, kp: &Keypair) -> Self {
+        let proof = Proof::prove(kp, &addr);
         User {
             id,
-            addr: PeerAddr::default(),
+            proof,
+            addr,
             name: String::new(),
             avatar: vec![],
-            sign1: [0u8; 32],
-            sign2: [0u8; 32],
         }
     }
 
     pub fn is_simple(&self) -> bool {
-        self.addr == PeerAddr::default()
+        self.name.len() == 0
     }
 }
