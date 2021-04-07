@@ -18,11 +18,15 @@ const PROOF_LENGTH: usize = 64; // use ed25519 signaure length.
 pub struct Proof(Vec<u8>);
 
 impl Proof {
-    pub fn prove(kp: &Keypair, addr: &PeerAddr) -> Proof {
-        Proof(kp.sign(&addr.0).as_bytes().to_vec())
+    pub fn prove(kp: &Keypair, maddr: &PeerAddr, raddr: &PeerAddr) -> Proof {
+        let mut bytes = vec![];
+        bytes.extend(&maddr.0);
+        bytes.extend(&raddr.0);
+        println!("{:?}", bytes);
+        Proof(kp.sign(&bytes).as_bytes().to_vec())
     }
 
-    pub fn verify(&self, gid: &GroupId, addr: &PeerAddr) -> Result<()> {
+    pub fn verify(&self, gid: &GroupId, maddr: &PeerAddr, raddr: &PeerAddr) -> Result<()> {
         if self.0.len() != PROOF_LENGTH {
             return Err(new_io_error("proof length failure!"));
         }
@@ -31,7 +35,11 @@ impl Proof {
         let pk =
             PublicKey::from_bytes(&gid.0).map_err(|_e| new_io_error("public serialize failure"))?;
 
-        pk.verify(&addr.0, &sign)
+        let mut bytes = vec![];
+        bytes.extend(&maddr.0);
+        bytes.extend(&raddr.0);
+
+        pk.verify(&bytes, &sign)
             .map_err(|_e| new_io_error("proof verify failure"))
     }
 }

@@ -15,4 +15,4 @@ signature = { version = "1", default-features = false }
 blake3 = "0.3"
 serde = { version = "1", features = ["derive"] }
 #tdn-types = { git = "https://github.com/cypherlink/TDN", branch="main", optional = true }
-tdn-types = { path = "../TDN/types" } # Dev
+tdn-types = { path = "../TDN/types", default-features = false } # Dev
