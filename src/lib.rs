@@ -22,7 +22,6 @@ impl Proof {
         let mut bytes = vec![];
         bytes.extend(&maddr.0);
         bytes.extend(&raddr.0);
-        println!("{:?}", bytes);
         Proof(kp.sign(&bytes).as_bytes().to_vec())
     }
 
