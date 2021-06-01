@@ -48,7 +48,7 @@ impl Proof {
         hex
     }
 
-    pub fn from_hex(&self, s: &str) -> Result<Proof> {
+    pub fn from_hex(s: &str) -> Result<Proof> {
         let s = s.to_string();
         if s.len() % 2 == 1 {
             return Err(new_io_error("Hex is invalid"));
