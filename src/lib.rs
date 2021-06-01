@@ -41,6 +41,29 @@ impl Proof {
         pk.verify(&bytes, &sign)
             .map_err(|_e| new_io_error("proof verify failure"))
     }
+
+    pub fn to_hex(&self) -> String {
+        let mut hex = String::new();
+        hex.extend(self.0.iter().map(|byte| format!("{:02x?}", byte)));
+        hex
+    }
+
+    pub fn from_hex(&self, s: &str) -> Result<Proof> {
+        let s = s.to_string();
+        if s.len() % 2 == 1 {
+            return Err(new_io_error("Hex is invalid"));
+        }
+
+        let mut bytes = vec![];
+
+        for i in 0..(s.len() / 2) {
+            let res = u8::from_str_radix(&s[2 * i..2 * i + 2], 16)
+                .map_err(|_e| new_io_error("Hex is invalid"))?;
+            bytes.push(res);
+        }
+
+        Ok(Proof(bytes))
+    }
 }
 
 pub fn genereate_id(seed: &[u8]) -> (GroupId, Keypair) {
